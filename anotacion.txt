@@ -1,0 +1,5 @@
+evaluaciones javier programación III
+
+Este proyecto cumple con las evaluaciones 2, 3, 4:
+
+por favor: Instalar dependencias: `npm install`, ejecutar: `node server.js` y acceder a: `http://localhost:3000`

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Panel de Administrador - Inventario</title>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f8f9fa; }
+            .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+            .form-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+            input, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+            textarea { grid-column: span 2; }
+            button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+            .btn-add { background: #28a745; color: white; grid-column: span 2; }
+            .search-bar { width: 100%; padding: 12px; margin-bottom: 20px; box-sizing: border-box; border: 2px solid #007bff; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+            th { background-color: #007bff; color: white; }
+            .btn-delete { background: #dc3545; color: white; }
+            .header { display: flex; justify-content: space-between; align-items: center; }
+        </style>
+    </head>
+    <body>
+            
+        <div class="container">
+            <div class="header">
+                <h2>Gestión de Inventario (Admin)</h2>
+                <button onclick="logout()" style="background:#6c757d; color:white;">Cerrar Sesión</button>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="nombre" placeholder="Nombre del producto" required>
+                <input type="text" id="codigo" placeholder="Código único" required>
+                <input type="number" id="precio" placeholder="Precio (Ej: 10.50)" step="0.01" required>
+                <input type="text" id="descripcion" placeholder="Descripción breve" required>
+                <button class="btn-add" onclick="crearProducto()">Agregar Producto</button>
+            </div>
+
+            <hr>
+
+            <input type="text" id="buscador" class="search-bar" placeholder="Buscar por nombre o código..." onkeyup="filtrarProductos()">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProductos">
+                    </tbody>
+            </table>
+        </div>
+
+        <script>
+            const token = localStorage.getItem('token');
+            const nivel = localStorage.getItem('nivel');
+        
+            // Validación de seguridad: Solo admin
+            if (!token || nivel !== 'admin') {
+                alert("Acceso denegado. Se requiere nivel Administrador.");
+                window.location.href = 'login.html';
+            }
+        
+            async function crearProducto() {
+                const producto = {
+                    nombre: document.getElementById('nombre').value,
+                    codigo: document.getElementById('codigo').value,
+                    precio: document.getElementById('precio').value,
+                    descripcion: document.getElementById('descripcion').value
+                };
+        
+                if (producto.precio <= 0) return alert("El precio debe ser mayor a 0");
+        
+                const res = await fetch('/products', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify(producto)
+                });
+        
+                if (res.ok) {
+                    alert("Producto creado con éxito");
+                    cargarProductos();
+                    // Limpiar campos
+                    document.getElementById('nombre').value = "";
+                    document.getElementById('codigo').value = "";
+                    document.getElementById('precio').value = "";
+                    document.getElementById('descripcion').value = "";
+                } else {
+                    const err = await res.text();
+                    alert("Error: " + err);
+                }
+            }
+        
+            async function cargarProductos() {
+                const res = await fetch('/products');
+                const productos = await res.json();
+                const tabla = document.getElementById('tablaProductos');
+                
+                // CORRECCIÓN: Ahora el botón llama a la función eliminarProducto
+                tabla.innerHTML = productos.map(p => `
+                    <tr>
+                        <td>${p.codigo}</td>
+                        <td>${p.nombre}</td>
+                        <td>$${p.precio.toFixed(2)}</td>
+                        <td>
+                            <button class="btn-delete" onclick="eliminarProducto('${p.codigo}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        
+            // NUEVA FUNCIÓN: Envía la petición DELETE al servidor
+            async function eliminarProducto(codigo) {
+                if (!confirm("¿Estás seguro de eliminar el producto " + codigo + "?")) return;
+        
+                const res = await fetch(`/products/${codigo}`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Authorization': token 
+                    }
+                });
+        
+                if (res.ok) {
+                    alert("Producto eliminado correctamente");
+                    cargarProductos(); // Refresca la tabla automáticamente
+                } else {
+                    alert("Error al eliminar el producto");
+                }
+            }
+        
+            function filtrarProductos() {
+                const filtro = document.getElementById('buscador').value.toLowerCase();
+                const filas = document.getElementById('tablaProductos').getElementsByTagName('tr');
+        
+                for (let fila of filas) {
+                    const texto = fila.innerText.toLowerCase();
+                    fila.style.display = texto.includes(filtro) ? '' : 'none';
+                }
+            }
+        
+            function logout() {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        
+            cargarProductos();
+        </script>
+
+    </body>
+</html>

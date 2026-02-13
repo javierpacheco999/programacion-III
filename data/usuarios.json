@@ -1,0 +1,14 @@
+[
+  {
+    "nombre": "programación ",
+    "email": "p333@email.com",
+    "password": "$2a$10$pwjzjTDtMJGVb/pNiHFJkOKczA2FCXysx7nlAqYIjoKj8U9RT.vV2",
+    "nivel": "admin"
+  },
+  {
+    "nombre": "javier ",
+    "email": "javier781923@gmail.com",
+    "password": "$2a$10$BAQ37aD.wNvxqZG4K1VSouNqCMNqoSd8fR91RT3Fyfxnu62RPe9Fa",
+    "nivel": "usuario"
+  }
+]
